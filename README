@@ -1,0 +1,9 @@
+This is a regular netbeans project and should be very quick to open and get started with.
+
+1.3 changes:
+
+* Will synchronize if you add new images to an existing album. Cannot remove images though.
+* Possibility to not resize image or set a custom resolution.
+* New user interface which reflects to resizing the window
+* Minor performance enhancements and removed 2 seconds of waiting before creating the album.
+* Added GNU license, some small code cleanup (I didnt really know Java when coding this) and put up on github.

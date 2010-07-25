@@ -85,16 +85,16 @@
 
           <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
           <SubComponents>
-            <Component class="javax.swing.JTextArea" name="jTextArea1">
+            <Component class="javax.swing.JTextArea" name="jTextAreaConsole">
               <Properties>
-                <Property name="background" type="java.awt.Color" resourceKey="jTextArea1.background"/>
+                <Property name="background" type="java.awt.Color" resourceKey="jTextAreaConsole.background"/>
                 <Property name="columns" type="int" value="20"/>
                 <Property name="editable" type="boolean" value="false"/>
-                <Property name="font" type="java.awt.Font" resourceKey="jTextArea1.font"/>
+                <Property name="font" type="java.awt.Font" resourceKey="jTextAreaConsole.font"/>
                 <Property name="lineWrap" type="boolean" value="true"/>
                 <Property name="rows" type="int" value="5"/>
-                <Property name="toolTipText" type="java.lang.String" resourceKey="jTextArea1.toolTipText"/>
-                <Property name="name" type="java.lang.String" value="jTextArea1" noResource="true"/>
+                <Property name="toolTipText" type="java.lang.String" resourceKey="jTextAreaConsole.toolTipText"/>
+                <Property name="name" type="java.lang.String" value="jTextAreaConsole" noResource="true"/>
               </Properties>
             </Component>
           </SubComponents>
@@ -458,7 +458,7 @@
             <MenuItem class="javax.swing.JMenuItem" name="Instructions">
               <Properties>
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
-                  <action class="massivephotouploader.MassivePhotoUploaderView" id="showAboutBox" methodName="showAboutBox"/>
+                  <action class="massivephotouploader.MassivePhotoUploaderView" id="showTutorial" methodName="showTutorial"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="Instructions.text"/>
                 <Property name="toolTipText" type="java.lang.String" resourceKey="Instructions.toolTipText"/>

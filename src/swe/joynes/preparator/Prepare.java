@@ -1,3 +1,20 @@
+/*********************************************************************
+ * Massive Photo Uploader: Upload a batch of albums to facebook
+ * Copyright (C) 2010  Johannes Kählare
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *********************************************************************/
 package swe.joynes.preparator;
 
 import java.io.BufferedReader;
@@ -20,17 +37,13 @@ import uk.me.phillsacre.PropertyUtils;
  */
 public class Prepare {
 
-    List<String> folders = new LinkedList<String>();
-    public List<PreparedAlbum> albums = new LinkedList<PreparedAlbum>();
+    private List<String> folders = new LinkedList<String>();
+    private List<PreparedAlbum> albums = new LinkedList<PreparedAlbum>();
     private Logger _log = Logger.getLogger(getClass());
-    
     private PropertyUtils _props = new PropertyUtils();
-    
-    int IMAGE_MINIMUM_SIZE;
-    String delim;
-    
-    public int photoSize;
-          
+    private int IMAGE_MINIMUM_SIZE;
+    private String delim;
+    private int photoSize;
 
     /**
      * Prepare all albums in the subdirectories. If a subdirectory includes pictures (JPG or jpg) then consider the
@@ -53,7 +66,7 @@ public class Prepare {
         // get config data
         IMAGE_MINIMUM_SIZE = Integer.parseInt(_props.getProperty(Constants.Properties.IMAGE_MINIMUM_SIZE));
         delim = _props.getProperty(Constants.Properties.ALBUM_NAME_DELIMITER);
-        
+
         visitAllDirs(new File(path));
         // look in each dir and find files
         for (String folder : folders) {
@@ -62,7 +75,7 @@ public class Prepare {
             if (files.size() > 0) {
                 // check for description in data-file
                 String description = null;
-                String albumName = folder.replace(path, "").replace("\\", delim).replaceFirst("^"+ delim, "");
+                String albumName = folder.replace(path, "").replace("\\", delim).replaceFirst("^" + delim, "");
                 try {
                     description = readTextFile(folder + "/data.txt");
                 } catch (IOException e) {
@@ -75,8 +88,8 @@ public class Prepare {
                 for (PreparedPhoto preparedPhoto : files) {
                     limitesPhotos.add(preparedPhoto);
                     i++;
-                if (i % albumMaxImages == 0) {
-                        albums.add(new PreparedAlbum(getAlbumName(albumName,i), description, new LinkedList<PreparedPhoto>(limitesPhotos)));
+                    if (i % albumMaxImages == 0) {
+                        albums.add(new PreparedAlbum(getAlbumName(albumName, i), description, new LinkedList<PreparedPhoto>(limitesPhotos)));
                         photoSize += albumMaxImages;
                         limitesPhotos.clear();
                     }
@@ -90,15 +103,14 @@ public class Prepare {
                     if (index != 1) {
                         indexStr = delim + delim + index;
                     }
-                    if (albumName == null || albumName.equals(""))
+                    if (albumName == null || albumName.equals("")) {
                         throw new Exception("Directory name invalid, make sure the dir you choosed has subdir with albums!");
+                    }
                     albums.add(new PreparedAlbum(albumName + indexStr, description, new LinkedList<PreparedPhoto>(limitesPhotos)));
                     photoSize += limitesPhotos.size();
                 }
             }
         }
-    //print(albums);
-
     }
 
     private List<PreparedPhoto> getFiles(String folder) {
@@ -114,18 +126,6 @@ public class Prepare {
             }
         }
         return files;
-    }
-
-    /**
-     * Tester of the application
-     * @param args
-     * @throws IOException 
-     */
-    public static void main(String[] args) throws Exception {
-        //new Prepare("G:\\johannes\\source\\programming\\workspace\\javaFacebookPhotoUploader\\scripts\\pics");
-        Prepare test = new Prepare("G:\\johannes\\release\\pics\\uppsala");
-
-        test.print();
     }
 
     /**
@@ -173,11 +173,11 @@ public class Prepare {
      */
     public String print() {
         StringBuffer str = new StringBuffer();
-        for (PreparedAlbum album : albums) {
+        for (PreparedAlbum album : getAlbums()) {
             str.append("##########################\n");
             str.append("Album name: " + album.getName());
             str.append("\n--------------------------\n");
-            str.append("Album description: " + ((album.getDescription() != null)? album.getDescription() : "None"));
+            str.append("Album description: " + ((album.getDescription() != null) ? album.getDescription() : "None"));
             str.append("\n--------------------------\n");
             str.append("Album images: \n");
             List<PreparedPhoto> photos = album.getPhotos();
@@ -188,8 +188,7 @@ public class Prepare {
                 imageCounter++;
                 if (imageCounter % 1 == 0) {
                     str.append("\n");
-                }
-                else {
+                } else {
                     str.append(", ");
                 }
             }
@@ -197,11 +196,27 @@ public class Prepare {
         }
         return str.toString();
     }
-    
+
     private String getAlbumName(String albumName, int i) throws Exception {
         String name = albumName + delim + delim + (i / Integer.valueOf(_props.getProperty(Constants.Properties.ALBUM_MAX_IMAGES)));
-        if (name == null || name.equals(""))
+        if (name == null || name.equals("")) {
             throw new Exception("Directory name invalid, make sure the dir you choosed has subdir with albums!");
+        }
         return name;
     }
+
+    /**
+     * @return the photoSize
+     */
+    public int getPhotoSize() {
+        return photoSize;
+    }
+
+    /**
+     * @return the albums
+     */
+    public List<PreparedAlbum> getAlbums() {
+        return albums;
+    }
+  
 }

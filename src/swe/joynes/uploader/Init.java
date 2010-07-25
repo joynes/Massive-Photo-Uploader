@@ -1,3 +1,20 @@
+/*********************************************************************
+ * Massive Photo Uploader: Upload a batch of albums to facebook
+ * Copyright (C) 2010  Johannes Kählare
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *********************************************************************/
 package swe.joynes.uploader;
 
 import java.util.logging.Level;
@@ -13,38 +30,21 @@ import uk.me.phillsacre.WorkingFacebookRestClient;
 
 public class Init {
 
-    private Logger _log = Logger.getLogger(getClass());
-    private PropertyUtils _props = new PropertyUtils();
-    public WorkingFacebookRestClient _facebookClient;
-    private BrowserLauncher _browserLauncher;
-    private String _authToken;
-
-    //private FacebookDAO _facebookDAO;
-    private boolean _requireLogin;
-    JTextArea _jTextArea;
-    JFrame _mainFrame;
-
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-        try {
-            System.out.println("Init applic");
-            //Init test = new Init(null);
-            //test.connect();
-            Thread.sleep(10000);
-        //test.authenticate();
-        } catch (InterruptedException ex) {
-            java.util.logging.Logger.getLogger(Init.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+    private Logger log = Logger.getLogger(getClass());
+    private PropertyUtils props = new PropertyUtils();
+    private WorkingFacebookRestClient facebookClient;
+    private BrowserLauncher browserLauncher;
+    private String authToken;
+    private boolean requireLogin;
+    private JTextArea jTextArea;
+    private JFrame mainFrame;
 
     /**
      * @param jTextArea Area to put information about status
      */
     public Init(JTextArea jTextArea, JFrame mainFrame) {
-        _jTextArea = jTextArea;
-        _mainFrame = mainFrame;
+        this.jTextArea = jTextArea;
+        this.mainFrame = mainFrame;
     }
 
     public void authenticate() throws Exception {
@@ -58,16 +58,16 @@ public class Init {
      */
     public boolean connect() throws Exception {
 
-        String apiKey = _props.getProperty(Constants.Properties.FACEBOOK_API_KEY);
-        String secret = _props.getProperty(Constants.Properties.FACEBOOK_SECRET);
+        String apiKey = props.getProperty(Constants.Properties.FACEBOOK_API_KEY);
+        String secret = props.getProperty(Constants.Properties.FACEBOOK_SECRET);
 
-        String persistentKey = _props.getProperty(Constants.Properties.SESSION_PERSISTENT_KEY);
-        String sessionSecret = _props.getProperty(Constants.Properties.SESSION_SECRET_KEY);
+        String persistentKey = props.getProperty(Constants.Properties.SESSION_PERSISTENT_KEY);
+        String sessionSecret = props.getProperty(Constants.Properties.SESSION_SECRET_KEY);
 
         // if firsttime then redirect to page where to accept the peding stuff
 
         printInfo("Initialising facebook client");
-        String firsttime = _props.getProperty(Constants.Properties.INIT_FIRSTIME);
+        String firsttime = props.getProperty(Constants.Properties.INIT_FIRSTIME);
         if (firsttime != null && firsttime.equals("1")) {
             alert("Program is run for first time! I will guide you through the setup now :). Press ok to continue!");
             alert("First you need to authorize this application. \nIt is recommended that you mark <Keep me logged in> to not need to login in everytime you use the applic. \nPress ok to open a browser and authorize this application");
@@ -76,29 +76,29 @@ public class Init {
             alert("It is very much recommended that you allow:\n<Allow massivePhotoUpload to upload or modify photos without my approval each time> \nOtherwise this might be a lot of unnecessary manual work. \nPress ok to browse to this setup!");
             openBrowser("http://www.facebook.com/authorize.php?" + "&api_key=" + apiKey + "&ext_perm=photo_upload");
             alert("Press ok when done with the setup. Files will now be uploaded!");
-            
-            _props.setProperty(Constants.Properties.INIT_FIRSTIME, "0");
+
+            props.setProperty(Constants.Properties.INIT_FIRSTIME, "0");
         }
 
 
         if (StringUtils.isNotBlank(persistentKey)) {
             printInfo("Using existing session");
 
-            _facebookClient = new WorkingFacebookRestClient(apiKey, secret,
+            facebookClient = new WorkingFacebookRestClient(apiKey, secret,
                     persistentKey);
-            _facebookClient.setSessionSecret(sessionSecret);
-            _requireLogin = false;
+            getFacebookClient().setSessionSecret(sessionSecret);
+            requireLogin = false;
         } else {
-            _facebookClient = new WorkingFacebookRestClient(apiKey, secret);
-            _requireLogin = true;
+            facebookClient = new WorkingFacebookRestClient(apiKey, secret);
+            requireLogin = true;
         }
 
-        _facebookClient.setIsDesktop(true);
+        getFacebookClient().setIsDesktop(true);
 
         String auth = getAuthorisationToken();
 
         if (auth != null) {
-            String loginUrl = _props.getProperty("facebook.login-url");
+            String loginUrl = props.getProperty("facebook.login-url");
             openBrowser(loginUrl + "&api_key=" + apiKey + "&auth_token=" + auth);
             return false;
         }
@@ -107,13 +107,13 @@ public class Init {
 
     private String getAuthorisationToken() throws Exception {
         try {
-            if (_requireLogin) {
-                _authToken = _facebookClient.auth_createToken();
+            if (requireLogin) {
+                authToken = getFacebookClient().auth_createToken();
 
-                _log.debug("Got auth key: " + _authToken);
+                log.debug("Got auth key: " + authToken);
             }
 
-            return _authToken;
+            return authToken;
         } catch (Exception e) {
             printInfo("Error when getting auth token");
             throw new Exception("Error when getting auth token", e);
@@ -126,35 +126,35 @@ public class Init {
     private void openBrowser(String url) throws Exception {
         try {
             printInfo(String.format("Browsing to: [%s]", url));
-            _browserLauncher = new BrowserLauncher(null);
-            _browserLauncher.openURLinBrowser(url);
+            browserLauncher = new BrowserLauncher(null);
+            browserLauncher.openURLinBrowser(url);
 
 
         } catch (Exception e) {
             printInfo("Could not launch browser");
-            _log.error("Could not launch browser", e);
+            log.error("Could not launch browser", e);
             throw new Exception("Could not launch browser", e);
         }
     }
 
     private void getAuthenticatedSession() throws Exception {
         try {
-            if (_requireLogin) {
-                _facebookClient.auth_getSession(_authToken);
+            if (requireLogin) {
+                getFacebookClient().auth_getSession(authToken);
 
-                if ("0".equals(_facebookClient.getSessionExpires())) {
-                    _log.debug("Session is set not to expire - saving info");
+                if ("0".equals(getFacebookClient().getSessionExpires())) {
+                    log.debug("Session is set not to expire - saving info");
 
-                    _props.setProperty(
+                    props.setProperty(
                             Constants.Properties.SESSION_PERSISTENT_KEY,
-                            _facebookClient.getSessionKey());
-                    _props.setProperty(Constants.Properties.SESSION_SECRET_KEY,
-                            _facebookClient.getSessionSecret());
+                            getFacebookClient().getSessionKey());
+                    props.setProperty(Constants.Properties.SESSION_SECRET_KEY,
+                            getFacebookClient().getSessionSecret());
                 }
             }
         } catch (Exception e) {
             printInfo("Could not authenticate session");
-            _log.error("Could not authenticate session", e);
+            log.error("Could not authenticate session", e);
             throw new Exception("Could not authenticate session", e);
         }
     }
@@ -164,9 +164,9 @@ public class Init {
      * @param str
      */
     public void printInfo(String str) {
-        _jTextArea.setText(_jTextArea.getText() + "\n" + str);
-        _jTextArea.setCaretPosition(_jTextArea.getDocument().getLength());
-        _log.info(str);
+        jTextArea.setText(jTextArea.getText() + "\n" + str);
+        jTextArea.setCaretPosition(jTextArea.getDocument().getLength());
+        log.info(str);
     }
 
     /**
@@ -174,6 +174,13 @@ public class Init {
      * @param str
      */
     public void alert(String str) {
-        JOptionPane.showMessageDialog(_mainFrame, str);
+        JOptionPane.showMessageDialog(mainFrame, str);
+    }
+
+    /**
+     * @return the facebookClient
+     */
+    public WorkingFacebookRestClient getFacebookClient() {
+        return facebookClient;
     }
 }

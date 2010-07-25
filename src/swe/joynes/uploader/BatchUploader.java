@@ -1,3 +1,20 @@
+/*********************************************************************
+ * Massive Photo Uploader: Upload a batch of albums to facebook
+ * Copyright (C) 2010  Johannes Kählare
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *********************************************************************/
 package swe.joynes.uploader;
 
 import com.facebook.api.FacebookException;
@@ -29,9 +46,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import uk.me.phillsacre.Constants;
 import uk.me.phillsacre.ImageUtils;
-import uk.me.phillsacre.Photo;
 import uk.me.phillsacre.PhotoImpl;
-import uk.me.phillsacre.PropertyUtils;
 import uk.me.phillsacre.XMLUtils;
 
 /**
@@ -41,14 +56,13 @@ import uk.me.phillsacre.XMLUtils;
  */
 public class BatchUploader {
 
-    WorkingFacebookRestClient _facebookClient;
-    Prepare _albums;
-    final private int SLEEP_TIME = 2000;
-    private Logger _log = Logger.getLogger(getClass());
-    JTextArea jTextArea1;
-    JFrame _mainFrame;
-    JProgressBar _jProgressBar;
-    int picturesUploaded = 0;
+    private WorkingFacebookRestClient facebookClient;
+    private Prepare albums;
+    private Logger log = Logger.getLogger(getClass());
+    private JTextArea jTextArea;
+    private JFrame mainFrame;
+    private JProgressBar jProgressBar;
+    private int picturesUploaded = 0;
     private int photoSize;
 
     /**
@@ -60,35 +74,34 @@ public class BatchUploader {
      * @throws java.lang.Exception
      */
     public BatchUploader(WorkingFacebookRestClient facebookClient, Prepare albums, JTextArea jTextArea, JFrame mainFrame, JProgressBar jProgressBar) throws Exception {
-        _albums = albums;
-        _facebookClient = facebookClient;
-        jTextArea1 = jTextArea;
-        _mainFrame = mainFrame;
-        _jProgressBar = jProgressBar;
+        this.albums = albums;
+        this.facebookClient = facebookClient;
+        this.jTextArea = jTextArea;
+        this.mainFrame = mainFrame;
+        this.jProgressBar = jProgressBar;
         upload();
     }
-    
+
     private void upload() {
-        photoSize = _albums.photoSize;
+        photoSize = albums.getPhotoSize();
         try {
             printInfo("Uploading");
             AlbumsHandler();
 
-            _jProgressBar.setValue(100);
+            jProgressBar.setValue(100);
             printInfo("Uploading finnished successfully!");
             alert("Uploading finnished successfully!");
+            jProgressBar.setValue(0);
         } catch (Exception ex) {
             printInfo("Error: " + ex.getMessage());
-            _log.error("Here: " + ex, ex);
+            log.error("Here: " + ex, ex);
 
             String errorText = "";
             if (ex.getMessage().contains("Session key invalid")) {
                 MassivePhotoUploaderView.properties.setProperty(Constants.Properties.SESSION_PERSISTENT_KEY, "");
                 MassivePhotoUploaderView.properties.setProperty(Constants.Properties.SESSION_SECRET_KEY, "");
-                alert("Session has expired, Please click OK to obtain a new one!");
-                upload();
-            }
-            else {
+                alert("Session has expired, Please click Upload again to obtain a new one!");
+            } else {
                 alert("The albums was not successfully uploaded. \nTo recover from this login to facebook and remove the last created album because all photos might not be included. \nWhen done rerun this program to continue the synchronization!");
                 alert("Error: " + errorText + ex.getMessage());
             }
@@ -106,14 +119,14 @@ public class BatchUploader {
      *
      */
     public void AlbumsHandler() throws Exception {
-        _log.info("BatchUploading");
+        log.info("BatchUploading");
 
         // get all existing albums to check if the album already exists
         List<String> existingAlbumNames = getUserAlbums();
 
         List<PreparedAlbum> nonExistingAlbums = new LinkedList<PreparedAlbum>();
         // iterate all albums and find out which to process
-        for (PreparedAlbum preparedAlbum : _albums.albums) {
+        for (PreparedAlbum preparedAlbum : albums.getAlbums()) {
 
             String albumName = preparedAlbum.getName();
 
@@ -122,7 +135,7 @@ public class BatchUploader {
             for (String existingAlbumName : existingAlbumNames) {
                 if (existingAlbumName.equals((albumName))) {
                     isExisting = true;
-                    _log.info("Album " + albumName + " already exists so sync it!");
+                    log.info("Album " + albumName + " already exists so sync it!");
                     printInfo("Synchronize: Album " + albumName + " already exists so sync it!");
                     photoSize -= preparedAlbum.getSize();
                     preparedAlbum.setAlreadyExist(true);
@@ -155,18 +168,17 @@ public class BatchUploader {
         String tmpPath = System.getProperty("java.io.tmpdir");
 
         // Copy all the pictures to a temp folder and resize them
-        _log.info("Image tmp path is "  + tmpPath);
+        log.info("Image tmp path is " + tmpPath);
         printInfo("Image tmp path is " + tmpPath);
         // Create the album if it was not already created
 
         Long albumId = null;
         if (preparedAlbum.getAlreadyExists()) {
             printInfo("The album " + preparedAlbum.getName() + " does already exists. Syncing files instead.");
-        }
-   else {
+        } else {
             // sleep a little before and after uploading.. seems that it was doing things to fast..
             printInfo("Creating Facebook album: " + preparedAlbum.getName());
-            Document doc = _facebookClient.photos_createAlbum(preparedAlbum.getName(), preparedAlbum.getDescription(), null,
+            Document doc = facebookClient.photos_createAlbum(preparedAlbum.getName(), preparedAlbum.getDescription(), null,
                     MassivePhotoUploaderView.properties.getProperty(Constants.Properties.VISIBILITY));
 
             NodeList nl = doc.getElementsByTagName("photos_createAlbum_response");
@@ -194,16 +206,15 @@ public class BatchUploader {
         }
 
         if (albumId == -1) {
-            throw new Exception("Could not find album " + preparedAlbum.getName() +
-                    "though it should been created");
+            throw new Exception("Could not find album " + preparedAlbum.getName()
+                    + "though it should been created");
         }
 
         // go through all photos and upload them
         for (PreparedPhoto photo : preparedAlbum.getPhotos()) {
             if (existingImages.contains(photo.getDescription())) {
                 printInfo("Photo " + photo.getDescription() + " already exists so skipping it..");
-            }
-            else {
+            } else {
 
                 String photoPath = photo.getPath();
 
@@ -214,14 +225,14 @@ public class BatchUploader {
                     copyfile(photoPath, tmpPhotoPath);
 
                     printInfo("Resizing: " + photo.getDescription());
-                    int maxResolution =  Integer.parseInt(MassivePhotoUploaderView.properties.getProperty(Constants.Properties.MAX_DIMENSION));
+                    int maxResolution = Integer.parseInt(MassivePhotoUploaderView.properties.getProperty(Constants.Properties.MAX_DIMENSION));
                     ImageUtils.resizeImage(new PhotoImpl(new File(tmpPhotoPath)), maxResolution, maxResolution);
                     photoPath = tmpPhotoPath;
                 }
-            
+
                 printInfo("Upload: " + photo.getDescription());
-                _jProgressBar.setValue((int) (((float) picturesUploaded++ / (float) photoSize) * 100F));
-                _facebookClient.photos_upload(new File(photoPath), photo.getDescription(), new Long(albumId));
+                jProgressBar.setValue((int) (((float) picturesUploaded++ / (float) photoSize) * 100F));
+                facebookClient.photos_upload(new File(photoPath), photo.getDescription(), new Long(albumId));
             }
         }
     }
@@ -256,8 +267,8 @@ public class BatchUploader {
     public List<String> getUserAlbums() throws FacebookException, IOException {
         List<String> albums = new LinkedList<String>();
         int userId;
-        userId = _facebookClient.users_getLoggedInUser();
-        Document doc = _facebookClient.photos_getAlbums(userId);
+        userId = facebookClient.users_getLoggedInUser();
+        Document doc = facebookClient.photos_getAlbums(userId);
 
         NodeList nl = doc.getElementsByTagName("album");
         int length = nl.getLength();
@@ -270,7 +281,6 @@ public class BatchUploader {
         return albums;
     }
 
-
     /**
      * Get all photo captions for the specific album
      * @param albumId
@@ -281,7 +291,7 @@ public class BatchUploader {
     private Set<String> getAlbumPhotos(Long albumId) throws FacebookException, IOException {
 
         Set<String> set = new HashSet<String>();
-        Document doc = _facebookClient.photos_get(albumId);
+        Document doc = facebookClient.photos_get(albumId);
         NodeList nl = doc.getElementsByTagName("photo");
         int length = nl.getLength();
         for (int i = 0; i < length; i++) {
@@ -291,6 +301,7 @@ public class BatchUploader {
         }
         return set;
     }
+
     /**
      * Get Id of the album with that name. This is an ugly way to do it but Im
      * short of time
@@ -299,8 +310,8 @@ public class BatchUploader {
     public long getUserAlbumId(String albumname) throws FacebookException, IOException {
         List<String> albums = new LinkedList<String>();
         int userId;
-        userId = _facebookClient.users_getLoggedInUser();
-        Document doc = _facebookClient.photos_getAlbums(userId);
+        userId = facebookClient.users_getLoggedInUser();
+        Document doc = facebookClient.photos_getAlbums(userId);
 
         NodeList nl = doc.getElementsByTagName("album");
         int length = nl.getLength();
@@ -328,15 +339,14 @@ public class BatchUploader {
             alert("Uploading finnished successfully!");
         } catch (Exception ex) {
             printInfo("Error: " + ex.getMessage());
-            _log.error("Here: " + ex);
+            log.error("Here: " + ex);
 
             String errorText = "";
             if (ex.getMessage().contains("Session key invalid")) {
                 MassivePhotoUploaderView.properties.setProperty(Constants.Properties.SESSION_PERSISTENT_KEY, "");
                 MassivePhotoUploaderView.properties.setProperty(Constants.Properties.SESSION_SECRET_KEY, "");
                 alert("Resetting sessionkey, Please click upload again!");
-            }
-            else {
+            } else {
                 alert("Error: " + errorText + ex.getMessage());
             }
         }
@@ -347,7 +357,7 @@ public class BatchUploader {
      * @param str
      */
     public void alert(String str) {
-        JOptionPane.showMessageDialog(_mainFrame, str);
+        JOptionPane.showMessageDialog(mainFrame, str);
     }
 
     /**
@@ -355,10 +365,8 @@ public class BatchUploader {
      * @param str
      */
     public void printInfo(String str) {
-        jTextArea1.setText(jTextArea1.getText() + "\n" + str);
-        jTextArea1.setCaretPosition(jTextArea1.getDocument().getLength());
-        _log.info(str);
+        jTextArea.setText(jTextArea.getText() + "\n" + str);
+        jTextArea.setCaretPosition(jTextArea.getDocument().getLength());
+        log.info(str);
     }
-
-   
 }

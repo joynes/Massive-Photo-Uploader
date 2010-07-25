@@ -2,6 +2,7 @@ package uk.me.phillsacre;
 
 
 import java.io.File;
+import java.io.InputStream;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
@@ -30,8 +31,7 @@ public class PropertyUtils
 		try
 		{
 			// First, attempt to load the properties file from the user.home
-			File f = new File(System.getProperty("user.home") + File.separator
-					+ ".fb-uploader" + File.separator + "uploader.properties");
+			File f = new File("uploader.properties");
 
 			if (f.exists() && f.isFile())
 			{
@@ -40,7 +40,8 @@ public class PropertyUtils
 			}
 			else
 			{
-				_log.debug("Using properties file from ClassPath");
+             		_log.debug("Using properties file from ClassPath: " +
+                                        PropertyUtils.class.getClassLoader().getResource("uploader.properties").toURI());
 				_configFile = new File(PropertyUtils.class.getClassLoader()
 						.getResource("uploader.properties").toURI());
 			}
@@ -49,7 +50,8 @@ public class PropertyUtils
 		}
 		catch (Exception e)
 		{
-			throw new UploaderException("Could not load properties", e);
+			throw new UploaderException("Could not load properties from "  +
+                                        PropertyUtils.class.getClassLoader().getResource("uploader.properties"), e);
 		}
 	}
 

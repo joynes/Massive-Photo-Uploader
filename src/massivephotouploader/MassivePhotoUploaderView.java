@@ -1,9 +1,28 @@
+/*********************************************************************
+ * Massive Photo Uploader: Upload a batch of albums to facebook
+ * Copyright (C) 2010  Johannes Kählare
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *********************************************************************/
+
 /*
  * MassivePhotoUploaderView.java
  */
-
 package massivephotouploader;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import org.jdesktop.application.Action;
 import org.jdesktop.application.ResourceMap;
 import org.jdesktop.application.SingleFrameApplication;
@@ -13,6 +32,7 @@ import org.jdesktop.application.TaskMonitor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Timer;
@@ -33,17 +53,21 @@ import uk.me.phillsacre.PropertyUtils;
 public class MassivePhotoUploaderView extends FrameView {
 
     private Prepare albums = null;
-    static public PropertyUtils properties = new PropertyUtils();
-    
+    static public PropertyUtils properties;
+    private String tutorialUrl = "http://joynes.se/applic/massivePhotoUploaderFacebook/tutorial.php";
+
     public MassivePhotoUploaderView(SingleFrameApplication app) {
         super(app);
 
         initComponents();
 
+        properties = new PropertyUtils();
+        
         // status bar initialization - message timeout, idle icon and busy animation, etc
         ResourceMap resourceMap = getResourceMap();
         int messageTimeout = resourceMap.getInteger("StatusBar.messageTimeout");
         messageTimer = new Timer(messageTimeout, new ActionListener() {
+
             public void actionPerformed(ActionEvent e) {
                 statusMessageLabel.setText("");
             }
@@ -54,6 +78,7 @@ public class MassivePhotoUploaderView extends FrameView {
             busyIcons[i] = resourceMap.getIcon("StatusBar.busyIcons[" + i + "]");
         }
         busyIconTimer = new Timer(busyAnimationRate, new ActionListener() {
+
             public void actionPerformed(ActionEvent e) {
                 busyIconIndex = (busyIconIndex + 1) % busyIcons.length;
                 statusAnimationLabel.setIcon(busyIcons[busyIconIndex]);
@@ -67,10 +92,11 @@ public class MassivePhotoUploaderView extends FrameView {
 
         jComboBoxVisibility.setSelectedItem(properties.getProperty(Constants.Properties.VISIBILITY));
         jComboBoxResize.setSelectedItem(properties.getProperty(Constants.Properties.MAX_DIMENSION));
-      
+
         // connecting action tasks to status bar via TaskMonitor
         TaskMonitor taskMonitor = new TaskMonitor(getApplication().getContext());
         taskMonitor.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 String propertyName = evt.getPropertyName();
                 if ("started".equals(propertyName)) {
@@ -87,17 +113,25 @@ public class MassivePhotoUploaderView extends FrameView {
                     progressBar.setVisible(false);
                     progressBar.setValue(0);
                 } else if ("message".equals(propertyName)) {
-                    String text = (String)(evt.getNewValue());
+                    String text = (String) (evt.getNewValue());
                     statusMessageLabel.setText((text == null) ? "" : text);
                     messageTimer.restart();
                 } else if ("progress".equals(propertyName)) {
-                    int value = (Integer)(evt.getNewValue());
+                    int value = (Integer) (evt.getNewValue());
                     progressBar.setVisible(true);
                     progressBar.setIndeterminate(false);
                     progressBar.setValue(value);
                 }
             }
         });
+        
+        jTextAreaConsole.setText(jTextAreaConsole.getText() + 
+                "Massive Photo Uploader Copyright (C) 2010  Johannes Kählare\n" +
+                "This program comes with ABSOLUTELY NO WARRANTY.\n" +
+                "This is free software, and you are welcome to redistribute it under certain conditions.");
+        jTextAreaConsole.setCaretPosition(jTextAreaConsole.getDocument().getLength());
+
+        
     }
 
     @Action
@@ -123,7 +157,7 @@ public class MassivePhotoUploaderView extends FrameView {
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        jTextAreaConsole = new javax.swing.JTextArea();
         jPanel3 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel();
@@ -196,15 +230,15 @@ public class MassivePhotoUploaderView extends FrameView {
 
         jScrollPane1.setName("jScrollPane1"); // NOI18N
 
-        jTextArea1.setBackground(resourceMap.getColor("jTextArea1.background")); // NOI18N
-        jTextArea1.setColumns(20);
-        jTextArea1.setEditable(false);
-        jTextArea1.setFont(resourceMap.getFont("jTextArea1.font")); // NOI18N
-        jTextArea1.setLineWrap(true);
-        jTextArea1.setRows(5);
-        jTextArea1.setToolTipText(resourceMap.getString("jTextArea1.toolTipText")); // NOI18N
-        jTextArea1.setName("jTextArea1"); // NOI18N
-        jScrollPane1.setViewportView(jTextArea1);
+        jTextAreaConsole.setBackground(resourceMap.getColor("jTextAreaConsole.background")); // NOI18N
+        jTextAreaConsole.setColumns(20);
+        jTextAreaConsole.setEditable(false);
+        jTextAreaConsole.setFont(resourceMap.getFont("jTextAreaConsole.font")); // NOI18N
+        jTextAreaConsole.setLineWrap(true);
+        jTextAreaConsole.setRows(5);
+        jTextAreaConsole.setToolTipText(resourceMap.getString("jTextAreaConsole.toolTipText")); // NOI18N
+        jTextAreaConsole.setName("jTextAreaConsole"); // NOI18N
+        jScrollPane1.setViewportView(jTextAreaConsole);
 
         mainPanel.add(jScrollPane1, java.awt.BorderLayout.CENTER);
 
@@ -397,7 +431,7 @@ public class MassivePhotoUploaderView extends FrameView {
         helpMenu.setText(resourceMap.getString("helpMenu.text")); // NOI18N
         helpMenu.setName("helpMenu"); // NOI18N
 
-        Instructions.setAction(actionMap.get("showAboutBox")); // NOI18N
+        Instructions.setAction(actionMap.get("showTutorial")); // NOI18N
         Instructions.setText(resourceMap.getString("Instructions.text")); // NOI18N
         Instructions.setToolTipText(resourceMap.getString("Instructions.toolTipText")); // NOI18N
         Instructions.setName("Instructions"); // NOI18N
@@ -457,63 +491,64 @@ public class MassivePhotoUploaderView extends FrameView {
     }
 
     private class ChooseFolderTask extends org.jdesktop.application.Task<Object, Void> {
+
         ChooseFolderTask(org.jdesktop.application.Application app) {
             // Runs on the EDT.  Copy GUI state that
             // doInBackground() depends on from parameters
             // to ChooseFolderTask fields, here.
             super(app);
         }
-        @Override protected Object doInBackground() {
+
+        @Override
+        protected Object doInBackground() {
             // Your Task's code here.  This method runs
             // on a background thread, so don't reference
             // the Swing GUI from here.
 
             try {
-               JFrame frame = new JFrame();
+                JFrame frame = new JFrame();
 
-            // Get path from config
-            
-            String lastDir = properties.getProperty(Constants.Properties.LAST_DIRECTORY);
+                // Get path from config
 
-            JFileChooser fc = new JFileChooser(new File(lastDir));
-            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                String lastDir = properties.getProperty(Constants.Properties.LAST_DIRECTORY);
 
-            fc.showOpenDialog(frame);
+                JFileChooser fc = new JFileChooser(new File(lastDir));
+                fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-            // Get the selected file
-            File file = fc.getSelectedFile();
+                fc.showOpenDialog(frame);
 
-            if (file != null && file.exists()) {
+                // Get the selected file
+                File file = fc.getSelectedFile();
 
-                properties.setProperty(Constants.Properties.LAST_DIRECTORY, file.getAbsolutePath());
+                if (file != null && file.exists()) {
 
-                albums = new Prepare(file.getAbsolutePath());
-                jTextArea1.setText(albums.print());
+                    properties.setProperty(Constants.Properties.LAST_DIRECTORY, file.getAbsolutePath());
 
-                jLabelAlbumCount.setText(String.valueOf(albums.albums.size()));
-                jLabelImageCount.setText(String.valueOf(albums.photoSize));
+                    albums = new Prepare(file.getAbsolutePath());
+                    jTextAreaConsole.setText(albums.print());
 
-                jButtonUpload.setEnabled(true);
+                    jLabelAlbumCount.setText("Albums: " + String.valueOf(albums.getAlbums().size()));
+                    jLabelImageCount.setText("Images: " + String.valueOf(albums.getPhotoSize()));
 
+                    jButtonUpload.setEnabled(true);
+
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(MassivePhotoUploaderView.class.getName()).log(Level.WARNING, null, ex);
+                alert("Error: " + ex.getMessage());
             }
-        } catch (Exception ex) {
-            Logger.getLogger(MassivePhotoUploaderView.class.getName()).log(Level.WARNING, null, ex);
-            alert("Error: " + ex.getMessage());
-        }
             return 0;
         }
-        @Override protected void succeeded(Object result) {
+
+        @Override
+        protected void succeeded(Object result) {
             // Runs on the EDT.  Update the GUI based on
             // the result computed by doInBackground().
         }
-        
-          /**
-     * POPUP a message alert
-     * @param str
-     */
-   
-
-
+        /**
+         * POPUP a message alert
+         * @param str
+         */
     }
 
     @Action
@@ -522,26 +557,29 @@ public class MassivePhotoUploaderView extends FrameView {
     }
 
     private class UploadImagesTask extends org.jdesktop.application.Task<Object, Void> {
+
         UploadImagesTask(org.jdesktop.application.Application app) {
             // Runs on the EDT.  Copy GUI state that
             // doInBackground() depends on from parameters
             // to UploadImagesTask fields, here.
             super(app);
         }
-        @Override protected Object doInBackground() {
+
+        @Override
+        protected Object doInBackground() {
             // Your Task's code here.  This method runs
             // on a background thread, so don't reference
             // the Swing GUI from here.
 
-              try {
+            try {
                 jButtonBrowse.setEnabled(false);
                 jButtonUpload.setEnabled(false);
                 jComboBoxResize.setEnabled(false);
                 jComboBoxVisibility.setEnabled(false);
                 jProgressBarMeter.setValue(0);
-                if (albums != null && albums.albums.size() > 0) {
+                if (albums != null && albums.getAlbums().size() > 0) {
 
-                    Init init = new Init(jTextArea1, MassivePhotoUploaderApp.getApplication().getMainFrame());
+                    Init init = new Init(jTextAreaConsole, MassivePhotoUploaderApp.getApplication().getMainFrame());
 
                     if (!init.connect()) {
                         alert("Press ok when logged in to facebook");
@@ -549,9 +587,9 @@ public class MassivePhotoUploaderView extends FrameView {
                     init.authenticate();
 
                     // start uploading in a new thread
-                    new BatchUploader(init._facebookClient, albums, jTextArea1,
+                    new BatchUploader(init.getFacebookClient(), albums, jTextAreaConsole,
                             MassivePhotoUploaderApp.getApplication().getMainFrame(), jProgressBarMeter);
-                
+
                 } else {
                     alert("You have not selected a valid album!");
                 }
@@ -559,26 +597,26 @@ public class MassivePhotoUploaderView extends FrameView {
                 Logger.getLogger(MassivePhotoUploaderView.class.getName()).log(Level.WARNING, null, ex);
                 if (ex.getMessage().contains("Session key invalid or")) {
                     alert("Your Session has expired. Please click 'Upload' again to obtain a new one!");
-                }
-                else {
+                } else {
                     alert("Error: " + ex.getMessage());
                 }
             }
 
-              jButtonBrowse.setEnabled(true);
-                jButtonUpload.setEnabled(true);
-                 jComboBoxResize.setEnabled(true);
-                jComboBoxVisibility.setEnabled(true);
+            jButtonBrowse.setEnabled(true);
+            jButtonUpload.setEnabled(true);
+            jComboBoxResize.setEnabled(true);
+            jComboBoxVisibility.setEnabled(true);
             return null;  // return your result
         }
-        
-        @Override protected void succeeded(Object result) {
+
+        @Override
+        protected void succeeded(Object result) {
             // Runs on the EDT.  Update the GUI based on
             // the result computed by doInBackground().
         }
     }
 
- public void alert(String str) {
+    public void alert(String str) {
         JOptionPane.showMessageDialog(MassivePhotoUploaderApp.getApplication().getMainFrame(), str);
     }
 
@@ -591,9 +629,15 @@ public class MassivePhotoUploaderView extends FrameView {
     public void setResize() {
         properties.setProperty(Constants.Properties.MAX_DIMENSION, jComboBoxResize.getSelectedItem().toString());
     }
-  
 
-
+    @Action
+    public void showTutorial() throws URISyntaxException {
+        try {
+            java.awt.Desktop.getDesktop().browse(new URI(tutorialUrl));
+        } catch (IOException ex) {
+            alert("Could not open your browser");
+        }
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonBrowse;
     private javax.swing.JButton jButtonUpload;
@@ -615,7 +659,7 @@ public class MassivePhotoUploaderView extends FrameView {
     private javax.swing.JPanel jPanel8;
     private javax.swing.JProgressBar jProgressBarMeter;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JTextArea jTextAreaConsole;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JProgressBar progressBar;
@@ -623,12 +667,10 @@ public class MassivePhotoUploaderView extends FrameView {
     private javax.swing.JLabel statusMessageLabel;
     private javax.swing.JPanel statusPanel;
     // End of variables declaration//GEN-END:variables
-
     private final Timer messageTimer;
     private final Timer busyIconTimer;
     private final Icon idleIcon;
     private final Icon[] busyIcons = new Icon[15];
     private int busyIconIndex = 0;
-
     private JDialog aboutBox;
 }
