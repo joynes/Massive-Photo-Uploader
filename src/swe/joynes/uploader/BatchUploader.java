@@ -17,7 +17,6 @@
  *********************************************************************/
 package swe.joynes.uploader;
 
-import com.facebook.api.FacebookException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -40,7 +39,6 @@ import org.apache.log4j.Logger;
 import swe.joynes.preparator.Prepare;
 import swe.joynes.preparator.PreparedAlbum;
 import swe.joynes.preparator.PreparedPhoto;
-import uk.me.phillsacre.WorkingFacebookRestClient;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -48,6 +46,7 @@ import uk.me.phillsacre.Constants;
 import uk.me.phillsacre.ImageUtils;
 import uk.me.phillsacre.PhotoImpl;
 import uk.me.phillsacre.XMLUtils;
+import com.google.code.facebookapi.*;
 
 /**
  * Scans a directory for albums and uploads them on facebook
@@ -56,7 +55,7 @@ import uk.me.phillsacre.XMLUtils;
  */
 public class BatchUploader {
 
-    private WorkingFacebookRestClient facebookClient;
+    private FacebookXmlRestClient facebookClient;
     private Prepare albums;
     private Logger log = Logger.getLogger(getClass());
     private JTextArea jTextArea;
@@ -73,7 +72,7 @@ public class BatchUploader {
      * @param mainFrame a place to create POPUPS to display important messages
      * @throws java.lang.Exception
      */
-    public BatchUploader(WorkingFacebookRestClient facebookClient, Prepare albums, JTextArea jTextArea, JFrame mainFrame, JProgressBar jProgressBar) throws Exception {
+    public BatchUploader(FacebookXmlRestClient facebookClient, Prepare albums, JTextArea jTextArea, JFrame mainFrame, JProgressBar jProgressBar) throws Exception {
         this.albums = albums;
         this.facebookClient = facebookClient;
         this.jTextArea = jTextArea;
@@ -178,8 +177,10 @@ public class BatchUploader {
         } else {
             // sleep a little before and after uploading.. seems that it was doing things to fast..
             printInfo("Creating Facebook album: " + preparedAlbum.getName());
-            Document doc = facebookClient.photos_createAlbum(preparedAlbum.getName(), preparedAlbum.getDescription(), null,
-                    MassivePhotoUploaderView.properties.getProperty(Constants.Properties.VISIBILITY));
+            
+            
+            Document doc = facebookClient.photos_createAlbum(preparedAlbum.getName(), preparedAlbum.getDescription(), null);//, null,
+                //    MassivePhotoUploaderView.properties.getProperty(Constants.Properties.VISIBILITY));
 
             NodeList nl = doc.getElementsByTagName("photos_createAlbum_response");
             int length = nl.getLength();
@@ -232,7 +233,7 @@ public class BatchUploader {
 
                 printInfo("Upload: " + photo.getDescription());
                 jProgressBar.setValue((int) (((float) picturesUploaded++ / (float) photoSize) * 100F));
-                facebookClient.photos_upload(new File(photoPath), photo.getDescription(), new Long(albumId));
+                facebookClient.photos_upload(new File(photoPath), photo.getDescription(), String.valueOf(albumId));
             }
         }
     }
@@ -265,9 +266,10 @@ public class BatchUploader {
      * @return
      */
     public List<String> getUserAlbums() throws FacebookException, IOException {
+        
         List<String> albums = new LinkedList<String>();
-        int userId;
-        userId = facebookClient.users_getLoggedInUser();
+        long userId = facebookClient.users_getLoggedInUser();
+        
         Document doc = facebookClient.photos_getAlbums(userId);
 
         NodeList nl = doc.getElementsByTagName("album");
@@ -308,6 +310,7 @@ public class BatchUploader {
      * @return
      */
     public long getUserAlbumId(String albumname) throws FacebookException, IOException {
+        /*
         List<String> albums = new LinkedList<String>();
         int userId;
         userId = facebookClient.users_getLoggedInUser();
@@ -323,6 +326,9 @@ public class BatchUploader {
                 return Long.parseLong(childData.get("aid"));
             }
         }
+        return -1;
+        * 
+        */
         return -1;
     }
 

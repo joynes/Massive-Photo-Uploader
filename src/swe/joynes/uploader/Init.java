@@ -26,13 +26,13 @@ import edu.stanford.ejalbert.BrowserLauncher;
 import javax.swing.JOptionPane;
 import uk.me.phillsacre.Constants;
 import uk.me.phillsacre.PropertyUtils;
-import uk.me.phillsacre.WorkingFacebookRestClient;
+import com.google.code.facebookapi.*;
 
 public class Init {
 
     private Logger log = Logger.getLogger(getClass());
     private PropertyUtils props = new PropertyUtils();
-    private WorkingFacebookRestClient facebookClient;
+    private FacebookXmlRestClient facebookClient;
     private BrowserLauncher browserLauncher;
     private String authToken;
     private boolean requireLogin;
@@ -84,17 +84,24 @@ public class Init {
         if (StringUtils.isNotBlank(persistentKey)) {
             printInfo("Using existing session");
 
-            facebookClient = new WorkingFacebookRestClient(apiKey, secret,
+            facebookClient = new FacebookXmlRestClient(apiKey, secret,
                     persistentKey);
-            getFacebookClient().setSessionSecret(sessionSecret);
+            
+            //facebookClient.
+            
+           // new FacebookXmlRestClient
+                    
+                    
+                    
+            //getFacebookClient().setSessionSecret(sessionSecret);
             requireLogin = false;
         } else {
-            facebookClient = new WorkingFacebookRestClient(apiKey, secret);
+            facebookClient = new FacebookXmlRestClient(apiKey, secret);
             requireLogin = true;
         }
 
-        getFacebookClient().setIsDesktop(true);
-
+        //getFacebookClient().setIsDesktop(true);
+        
         String auth = getAuthorisationToken();
 
         if (auth != null) {
@@ -142,14 +149,14 @@ public class Init {
             if (requireLogin) {
                 getFacebookClient().auth_getSession(authToken);
 
-                if ("0".equals(getFacebookClient().getSessionExpires())) {
+                if ("0".equals(getFacebookClient().getCacheSessionExpires())) {
                     log.debug("Session is set not to expire - saving info");
 
                     props.setProperty(
                             Constants.Properties.SESSION_PERSISTENT_KEY,
-                            getFacebookClient().getSessionKey());
+                            getFacebookClient().getCacheSessionKey());
                     props.setProperty(Constants.Properties.SESSION_SECRET_KEY,
-                            getFacebookClient().getSessionSecret());
+                            getFacebookClient().getCacheSessionSecret());
                 }
             }
         } catch (Exception e) {
@@ -180,7 +187,7 @@ public class Init {
     /**
      * @return the facebookClient
      */
-    public WorkingFacebookRestClient getFacebookClient() {
+    public FacebookXmlRestClient getFacebookClient() {
         return facebookClient;
     }
 }

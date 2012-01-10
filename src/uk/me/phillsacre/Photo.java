@@ -7,8 +7,8 @@ import java.io.Serializable;
 import java.util.List;
 
 import javax.swing.Icon;
+import com.google.code.facebookapi.*;
 
-import com.facebook.api.PhotoTag;
 
 /**
  * Interface to define a Photo in the file system.

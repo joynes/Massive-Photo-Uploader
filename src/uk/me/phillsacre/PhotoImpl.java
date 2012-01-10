@@ -14,7 +14,7 @@ import javax.swing.filechooser.FileSystemView;
 
 
 
-import com.facebook.api.PhotoTag;
+import com.google.code.facebookapi.*;
 
 /**
  * Implementation of Photo to use the local hard disk.

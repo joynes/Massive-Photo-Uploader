@@ -1,5 +1,6 @@
 package uk.me.phillsacre;
 
+import com.sun.xml.internal.xsom.impl.FacetImpl;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -10,9 +11,8 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
+import com.google.code.facebookapi.*;
 
-import com.facebook.api.FacebookException;
-import com.facebook.api.FacebookXmlRestClient;
 
 /**
  * Wrapper class for the Facebook XML Rest Client to try and fix some of the
@@ -52,7 +52,7 @@ public class WorkingFacebookRestClient extends FacebookXmlRestClient
 	 */
 	public String getSessionKey()
 	{
-		return _sessionKey;
+            return "null";
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class WorkingFacebookRestClient extends FacebookXmlRestClient
 	 */
 	public String getSessionSecret()
 	{
-		return _sessionSecret;
+		return "null";
 	}
 
 	/**
@@ -73,7 +73,7 @@ public class WorkingFacebookRestClient extends FacebookXmlRestClient
 	 */
 	public void setSessionSecret(String sessionSecret)
 	{
-		_sessionSecret = sessionSecret;
+		//_sessionSecret = sessionSecret;
 	}
 
 	/**
