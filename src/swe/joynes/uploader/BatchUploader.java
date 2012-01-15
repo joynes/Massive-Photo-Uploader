@@ -206,10 +206,6 @@ public class BatchUploader {
             existingImages = getAlbumPhotos(albumId);
         }
 
-        if (albumId == -1) {
-            throw new Exception("Could not find album " + preparedAlbum.getName()
-                    + "though it should been created");
-        }
 
         // go through all photos and upload them
         for (PreparedPhoto photo : preparedAlbum.getPhotos()) {
@@ -310,10 +306,9 @@ public class BatchUploader {
      * @return
      */
     public long getUserAlbumId(String albumname) throws FacebookException, IOException {
-        /*
         List<String> albums = new LinkedList<String>();
-        int userId;
-        userId = facebookClient.users_getLoggedInUser();
+        
+        long userId = facebookClient.users_getLoggedInUser();
         Document doc = facebookClient.photos_getAlbums(userId);
 
         NodeList nl = doc.getElementsByTagName("album");
@@ -326,10 +321,10 @@ public class BatchUploader {
                 return Long.parseLong(childData.get("aid"));
             }
         }
-        return -1;
-        * 
-        */
-        return -1;
+        throw new RuntimeException("Could not find album " + albumname
+                    + "though it should been created");
+        
+
     }
 
     /**

@@ -87,21 +87,12 @@ public class Init {
             facebookClient = new FacebookXmlRestClient(apiKey, secret,
                     persistentKey);
             
-            //facebookClient.
-            
-           // new FacebookXmlRestClient
-                    
-                    
-                    
-            //getFacebookClient().setSessionSecret(sessionSecret);
             requireLogin = false;
         } else {
             facebookClient = new FacebookXmlRestClient(apiKey, secret);
             requireLogin = true;
         }
 
-        //getFacebookClient().setIsDesktop(true);
-        
         String auth = getAuthorisationToken();
 
         if (auth != null) {

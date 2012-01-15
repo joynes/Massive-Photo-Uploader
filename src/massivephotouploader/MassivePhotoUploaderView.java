@@ -126,7 +126,7 @@ public class MassivePhotoUploaderView extends FrameView {
         });
         
         jTextAreaConsole.setText(jTextAreaConsole.getText() + 
-                "Massive Photo Uploader Copyright (C) 2010  Johannes Kählare\n" +
+                "Massive Photo Uploader is back again as version 1.4!\nI just made enough to make it work again. The difference is that you need to set the visibility part in the app preferences.\n\nMassive Photo Uploader Copyright (C) 2010  Johannes Kählare\n" +
                 "This program comes with ABSOLUTELY NO WARRANTY.\n" +
                 "This is free software, and you are welcome to redistribute it under certain conditions.");
         jTextAreaConsole.setCaretPosition(jTextAreaConsole.getDocument().getLength());
@@ -356,7 +356,7 @@ public class MassivePhotoUploaderView extends FrameView {
         jButtonUpload.setName("jButtonUpload"); // NOI18N
 
         jComboBoxVisibility.setFont(resourceMap.getFont("jComboBoxVisibility.font")); // NOI18N
-        jComboBoxVisibility.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "friends", "friends-of-friends", "everyone" }));
+        jComboBoxVisibility.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Not working anymore!" }));
         jComboBoxVisibility.setToolTipText(resourceMap.getString("jComboBoxVisibility.toolTipText")); // NOI18N
         jComboBoxVisibility.setAction(actionMap.get("setVisibility")); // NOI18N
         jComboBoxVisibility.setName("jComboBoxVisibility"); // NOI18N
